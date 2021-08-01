@@ -8,8 +8,6 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.ArgumentSerializer;
 import net.minecraft.command.arguments.ArgumentTypes;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.ShapelessRecipe;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -24,7 +22,6 @@ import org.objectweb.asm.Type;
 
 import java.util.Set;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod("recipedumper")
 public class RecipeDumper {
 
@@ -33,7 +30,6 @@ public class RecipeDumper {
 
     public RecipeDumper() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onSetup);
-        // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
         registerAllDumpers();
     }
