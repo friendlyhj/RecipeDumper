@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.RecipeManager;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import org.apache.commons.io.FileUtils;
 
@@ -32,6 +33,7 @@ public final class DumpRecipeCommand {
         RecipeManager recipeManager = context.getSource().asPlayer().world.getRecipeManager();
         JsonArray jsonArray = DumpRecipeCommand.dumpAllRecipes(recipeManager, modId);
         outputJson(new File(String.format("export/dump_recipes_%s.json", modId)), jsonArray);
+        context.getSource().sendFeedback(new StringTextComponent("Dump recipes successfully! See export Directory."), false);
         return 1;
     }
 
