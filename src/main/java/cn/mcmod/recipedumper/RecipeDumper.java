@@ -58,7 +58,9 @@ public class RecipeDumper {
                         Object modDeps = annotationData.getAnnotationData().get("modDeps");
                         return modDeps == null || ModList.get().isLoaded(((String) modDeps));
                     })
-                    .forEach(annotationData -> registerThisDumper(annotationData.getClassType()));
+                    .map(ModFileScanData.AnnotationData::getClassType)
+                    .distinct()
+                    .forEach(this::registerThisDumper);
         }
     }
 
