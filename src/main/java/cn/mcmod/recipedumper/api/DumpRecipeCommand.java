@@ -1,5 +1,6 @@
 package cn.mcmod.recipedumper.api;
 
+import com.google.common.collect.Iterators;
 import com.google.gson.*;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -34,7 +35,7 @@ public final class DumpRecipeCommand {
         JsonArray jsonArray = DumpRecipeCommand.dumpAllRecipes(recipeManager, modId);
         outputJson(new File(String.format("export/dump_recipes_%s.json", modId)), jsonArray);
         context.getSource().sendFeedback(new StringTextComponent("Dump recipes successfully! See export Directory."), false);
-        return 1;
+        return Iterators.size(jsonArray.iterator());
     }
 
     public static JsonArray dumpAllRecipes(RecipeManager recipeManager, String modFilter) {
