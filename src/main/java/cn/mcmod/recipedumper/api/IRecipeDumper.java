@@ -24,19 +24,6 @@ public interface IRecipeDumper<T extends IRecipe<?>> {
         return recipe.getType().toString();
     }
 
-    default void writeRecipeOutput(T recipe, JsonObject jsonObject) {
-        JsonObject output = new JsonObject();
-        ItemStack stack = recipe.getRecipeOutput();
-        output.addProperty("item", stack.getItem().getRegistryName().toString());
-        output.addProperty("count", stack.getCount());
-        if (stack.hasTag()) {
-            output.addProperty("nbt", stack.getTag().toString());
-        }
-        JsonObject outputs = new JsonObject();
-        outputs.add("1", output);
-        jsonObject.add("output", outputs);
-    }
-
     @Retention(RetentionPolicy.RUNTIME)
     @Repeatable(Container.class)
     @Target(ElementType.TYPE)
