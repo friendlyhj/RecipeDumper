@@ -1,5 +1,6 @@
 package cn.mcmod.recipedumper.impl;
 
+import cn.mcmod.recipedumper.RecipeDumper;
 import cn.mcmod.recipedumper.api.IRecipeInputs;
 import cn.mcmod.recipedumper.api.RecipeDumpException;
 import com.google.gson.JsonElement;
@@ -19,6 +20,8 @@ public class RecipeInputs implements IRecipeInputs {
 
     @Override
     public void addInput(int slot, Ingredient ingredient, int count) {
+        if (ingredient.hasNoMatchingItems())
+            return;
         inputs.put(slot, ingredient);
         counts.put(slot, count);
     }
@@ -36,6 +39,7 @@ public class RecipeInputs implements IRecipeInputs {
                 json.add(String.valueOf(entry.getIntKey()), ingredientJson);
             }
         } catch (Throwable throwable) {
+            // RecipeDumper.LOGGER.throwing(throwable);
             throw new RecipeDumpException();
         }
         return json;

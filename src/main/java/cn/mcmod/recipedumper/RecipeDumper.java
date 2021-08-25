@@ -26,7 +26,7 @@ import java.util.Set;
 public class RecipeDumper {
 
     // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger();
 
     public RecipeDumper() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onSetup);
