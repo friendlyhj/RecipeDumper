@@ -1,6 +1,6 @@
 package cn.mcmod.recipedumper;
 
-import cn.mcmod.recipedumper.api.DumpRecipeCommand;
+import cn.mcmod.recipedumper.impl.DumpRecipeCommand;
 import cn.mcmod.recipedumper.api.IRecipeDumper;
 import cn.mcmod.recipedumper.impl.ModArgumentType;
 import com.mojang.brigadier.CommandDispatcher;

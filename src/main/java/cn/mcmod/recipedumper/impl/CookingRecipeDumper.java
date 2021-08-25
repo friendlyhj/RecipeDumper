@@ -1,6 +1,8 @@
 package cn.mcmod.recipedumper.impl;
 
 import cn.mcmod.recipedumper.api.IRecipeDumper;
+import cn.mcmod.recipedumper.api.IRecipeInputs;
+import cn.mcmod.recipedumper.api.IRecipeOutputs;
 import com.google.gson.JsonObject;
 import net.minecraft.item.crafting.*;
 
@@ -14,11 +16,18 @@ import net.minecraft.item.crafting.*;
 public class CookingRecipeDumper implements IRecipeDumper<AbstractCookingRecipe> {
 
     @Override
-    public void writeJsonObject(AbstractCookingRecipe recipe, JsonObject jsonObject) {
-        jsonObject.addProperty("output", recipe.getRecipeOutput().getItem().getRegistryName().toString());
-        jsonObject.addProperty("output_count", recipe.getRecipeOutput().getCount());
-        jsonObject.addProperty("cooking_time", recipe.getCookTime());
+    public void setInputs(AbstractCookingRecipe recipe, IRecipeInputs inputs) {
+        inputs.addInput(1, recipe.getIngredients().get(0));
+    }
+
+    @Override
+    public void setOutputs(AbstractCookingRecipe recipe, IRecipeOutputs outputs) {
+        outputs.addOutput(1, recipe.getRecipeOutput());
+    }
+
+    @Override
+    public void writeExtraInformation(AbstractCookingRecipe recipe, JsonObject jsonObject) {
         jsonObject.addProperty("experience", recipe.getExperience());
-        jsonObject.add("input", recipe.getIngredients().get(0).serialize());
+        jsonObject.addProperty("cookTime", recipe.getCookTime());
     }
 }

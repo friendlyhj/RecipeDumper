@@ -1,6 +1,7 @@
 package cn.mcmod.recipedumper.api;
 
 import com.google.gson.JsonObject;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 
 import java.lang.annotation.*;
@@ -9,15 +10,31 @@ import java.lang.annotation.*;
  * @author youyihj
  */
 public interface IRecipeDumper<T extends IRecipe<?>> {
-    void writeJsonObject(T recipe, JsonObject jsonObject);
+    void setInputs(T recipe, IRecipeInputs inputs);
+
+    default void setOutputs(T recipe, IRecipeOutputs outputs) {
+        outputs.addOutput(1, recipe.getRecipeOutput());
+    }
+
+    default void writeExtraInformation(T recipe, JsonObject jsonObject) {
+
+    }
 
     default String getRecipeTypeName(T recipe) {
         return recipe.getType().toString();
     }
 
     default void writeRecipeOutput(T recipe, JsonObject jsonObject) {
-        jsonObject.addProperty("output", recipe.getRecipeOutput().getItem().getRegistryName().toString());
-        jsonObject.addProperty("output_count", recipe.getRecipeOutput().getCount());
+        JsonObject output = new JsonObject();
+        ItemStack stack = recipe.getRecipeOutput();
+        output.addProperty("item", stack.getItem().getRegistryName().toString());
+        output.addProperty("count", stack.getCount());
+        if (stack.hasTag()) {
+            output.addProperty("nbt", stack.getTag().toString());
+        }
+        JsonObject outputs = new JsonObject();
+        outputs.add("1", output);
+        jsonObject.add("output", outputs);
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -1,10 +1,12 @@
 package cn.mcmod.recipedumper.impl;
 
 import cn.mcmod.recipedumper.api.IRecipeDumper;
+import cn.mcmod.recipedumper.api.IRecipeInputs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapelessRecipe;
+import net.minecraft.util.NonNullList;
 
 /**
  * @author youyihj
@@ -13,11 +15,11 @@ import net.minecraft.item.crafting.ShapelessRecipe;
 public class ShapelessRecipeDumper implements IRecipeDumper<ShapelessRecipe> {
 
     @Override
-    public void writeJsonObject(ShapelessRecipe recipe, JsonObject jsonObject) {
-        this.writeRecipeOutput(recipe, jsonObject);
-        JsonArray input = new JsonArray();
-        recipe.getIngredients().stream().map(Ingredient::serialize).forEach(input::add);
-        jsonObject.add("input", input);
+    public void setInputs(ShapelessRecipe recipe, IRecipeInputs inputs) {
+        NonNullList<Ingredient> ingredients = recipe.getIngredients();
+        for (int i = 0; i < ingredients.size(); i++) {
+            inputs.addInput(i + 1, ingredients.get(i));
+        }
     }
 
     @Override
