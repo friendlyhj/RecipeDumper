@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.item.crafting.Ingredient;
+import org.apache.commons.lang3.Validate;
 
 /**
  * @author youyihj
@@ -34,6 +35,7 @@ public class RecipeInputs implements IRecipeInputs {
         }
         try {
             for (Int2ObjectMap.Entry<Ingredient> entry : inputs.int2ObjectEntrySet()) {
+                Validate.isTrue(entry.getValue().isVanilla());
                 JsonElement ingredientJson = entry.getValue().serialize();
                 ingredientJson.getAsJsonObject().addProperty("count", counts.get(entry.getIntKey()));
                 json.add(String.valueOf(entry.getIntKey()), ingredientJson);
