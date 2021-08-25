@@ -17,7 +17,9 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import org.apache.commons.io.FileUtils;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -39,19 +41,18 @@ public final class DumpRecipeCommand {
         String modId = modInfo.getModId();
         CommandSource source = context.getSource();
         RecipeManager recipeManager = source.asPlayer().world.getRecipeManager();
-        JsonArray jsonArray = DumpRecipeCommand.dumpAllRecipes(recipeManager, modId);
-        outputJson(new File(String.format("export/dump_recipes_%s.json", modId)), jsonArray);
+        JsonArray recipesArray = DumpRecipeCommand.dumpAllRecipes(recipeManager, modId);
+        JsonObject result = new JsonObject();
+        result.add("recipes", recipesArray);
+        JsonArray errorArray = new JsonArray();
+        ERROR_RECIPES.forEach(id -> errorArray.add(id.toString()));
+        result.add("error", errorArray);
+        outputJson(new File(String.format("export/dump_recipes_%s.json", modId)), result);
+        int recipesCount = Iterators.size(recipesArray.iterator());
         source.sendFeedback(new StringTextComponent("Dump recipes successfully! See export Directory."), false);
-        if (!ERROR_RECIPES.isEmpty()) {
-            source.sendFeedback(new StringTextComponent("Some recipes are not dumped due to exception"), true);
-            ERROR_RECIPES.stream()
-                    .filter(Objects::nonNull)
-                    .map(Functions.toStringFunction())
-                    .map(StringTextComponent::new)
-                    .forEach(text -> source.sendFeedback(text, true));
-        }
+        source.sendFeedback(new StringTextComponent(String.format("%s recipes dumped, %s recipes skipped", recipesCount, ERROR_RECIPES.size())), false);
         ERROR_RECIPES.clear();
-        return Iterators.size(jsonArray.iterator());
+        return recipesCount;
     }
 
     public static JsonArray dumpAllRecipes(RecipeManager recipeManager, String modFilter) {
