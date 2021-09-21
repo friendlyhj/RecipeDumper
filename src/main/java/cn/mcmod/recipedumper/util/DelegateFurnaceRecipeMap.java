@@ -31,7 +31,17 @@ public class DelegateFurnaceRecipeMap<V> extends AbstractMap<ItemStack, V> {
         if (activeMod != null) {
             modEntries.put(activeMod.getModId(), new AbstractMap.SimpleEntry<>(key, value));
         }
-        return super.put(key, value);
+        return internal.put(key, value);
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+        return internal.remove(key, value);
+    }
+
+    @Override
+    public V remove(Object key) {
+        return internal.remove(key);
     }
 
     public Collection<Map.Entry<ItemStack, V>> getModEntry(String modid) {

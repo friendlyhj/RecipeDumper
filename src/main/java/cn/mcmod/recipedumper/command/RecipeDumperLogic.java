@@ -6,7 +6,6 @@ import com.google.common.collect.Sets;
 import com.google.gson.*;
 import mezz.jei.Internal;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -20,7 +19,6 @@ import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.OreIngredient;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -32,15 +30,15 @@ import java.util.*;
  * @author youyihj
  */
 public class RecipeDumperLogic {
-    private final Collection<IRecipe> recipes;
-    private final String modFilter;
-    private final JsonArray recipesJson = new JsonArray();
-    private final List<IRecipe> errorRecipes = new ArrayList<>();
     private static final Map<Class<?>, String> supportClasses = Maps.asMap(
             Sets.newHashSet(ShapedRecipes.class, ShapedOreRecipe.class, ShapelessRecipes.class, ShapelessOreRecipe.class),
             clazz -> IShapedRecipe.class.isAssignableFrom(clazz) ? "crafting_shaped" : "crafting_shapeless"
     );
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private final Collection<IRecipe> recipes;
+    private final String modFilter;
+    private final JsonArray recipesJson = new JsonArray();
+    private final List<IRecipe> errorRecipes = new ArrayList<>();
 
     public RecipeDumperLogic(Collection<IRecipe> recipes, String modFilter) {
         this.recipes = recipes;
@@ -81,11 +79,17 @@ public class RecipeDumperLogic {
             for (int i = 0; i < ingredients.size(); i++) {
                 int x = i % width;
                 int y = i / width;
-                input.add(Integer.toString(y * 3 + x + 1), convertIngredient(ingredients.get(i)));
+                JsonObject ingredientJson = convertIngredient(ingredients.get(i));
+                if (ingredientJson.size() != 0) {
+                    input.add(Integer.toString(y * 3 + x + 1), ingredientJson);
+                }
             }
         } else {
             for (int i = 0; i < ingredients.size(); i++) {
-                input.add(Integer.toString(i + 1), convertIngredient(ingredients.get(i)));
+                JsonObject ingredientJson = convertIngredient(ingredients.get(i));
+                if (ingredientJson.size() != 0) {
+                    input.add(Integer.toString(i + 1), ingredientJson);
+                }
             }
         }
         JsonObject outputs = new JsonObject();
@@ -100,14 +104,12 @@ public class RecipeDumperLogic {
 
     private JsonObject convertIngredient(Ingredient ingredient) throws RecipeDumpException {
         JsonObject json = new JsonObject();
-        try {
-            if ((ingredient.getClass() == Ingredient.class && ingredient.getMatchingStacks().length == 1) || ingredient.getClass() == IngredientNBT.class) {
-                convertItemStack(json, ingredient.getMatchingStacks()[0]);
-            } else if (ingredient.getClass() == OreIngredient.class) {
-                json.addProperty("oredict", getOreDict(ingredient.getMatchingStacks()));
-            }
-        } catch (Throwable t) {
-            throw new RecipeDumpException("failed to convert ingredient: " + ingredient, t);
+        if ((ingredient.getClass() == Ingredient.class && ingredient.getMatchingStacks().length == 1) || ingredient.getClass() == IngredientNBT.class) {
+            convertItemStack(json, ingredient.getMatchingStacks()[0]);
+        } else if (ingredient.getClass() == OreIngredient.class) {
+            json.addProperty("oredict", getOreDict(ingredient.getMatchingStacks(), ingredient));
+        } else if (ingredient.getMatchingStacks().length != 0) {
+            throw new RecipeDumpException("Unsupported Ingredient: " + ingredient);
         }
         return json;
     }
@@ -132,19 +134,18 @@ public class RecipeDumperLogic {
     }
 
     private void outputJson(File file, JsonElement element) {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
-            FileUtils.write(file, gson.toJson(element), StandardCharsets.UTF_8);
+            FileUtils.write(file, GSON.toJson(element), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void dumpFurnaceRecipes(JsonArray recipesArray) {
-        JsonObject root = new JsonObject();
         Collection<Map.Entry<ItemStack, ItemStack>> modRecipes = RecipeDumper.INSTANCE.smeltingList.getModEntry(modFilter);
         Collection<Map.Entry<ItemStack, Float>> modExpList = RecipeDumper.INSTANCE.experienceList.getModEntry(modFilter);
         for (Map.Entry<ItemStack, ItemStack> recipe : modRecipes) {
+            JsonObject root = new JsonObject();
             float exp = -1.0f;
             for (Map.Entry<ItemStack, Float> itemStackFloatEntry : modExpList) {
                 if (compareItemStacks(recipe.getValue(), itemStackFloatEntry.getKey())) {
@@ -152,7 +153,7 @@ public class RecipeDumperLogic {
                     break;
                 }
             }
-            root.addProperty("type", "smithing");
+            root.addProperty("type", "smelting");
             JsonObject input = new JsonObject();
             input.add("1", convertItemStack(recipe.getKey()));
             JsonObject output = new JsonObject();
@@ -170,13 +171,19 @@ public class RecipeDumperLogic {
         return stack2.getItem() == stack1.getItem() && (stack2.getMetadata() == 32767 || stack2.getMetadata() == stack1.getMetadata());
     }
 
-    private String getOreDict(ItemStack[] items) throws RecipeDumpException {
+    private String getOreDict(ItemStack[] items, Ingredient ingredient) throws RecipeDumpException {
         if (items.length == 1) {
             int[] oreIDs = OreDictionary.getOreIDs(items[0]);
-            if (oreIDs.length != 1) {
-                throw new RecipeDumpException(items[0] + " has two or more ore dict entries");
-            } else {
+            if (oreIDs.length == 1) {
                 return OreDictionary.getOreName(oreIDs[0]);
+            } else {
+                for (int oreID : oreIDs) {
+                    String oreName = OreDictionary.getOreName(oreID);
+                    if (OreDictionary.getOres(oreName).stream().allMatch(ingredient)) {
+                        return oreName;
+                    }
+                }
+                throw new RecipeDumpException("Invalid ore ingredient: " + ingredient);
             }
         } else {
             String result = Internal.getStackHelper().getOreDictEquivalent(Arrays.asList(items));
