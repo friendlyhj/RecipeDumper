@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
-@Mod(modid = "recipedumper", name = "Recipe Dumper", version = "0.1")
+@Mod(modid = "recipedumper", name = "Recipe Dumper", version = "0.1", dependencies = "required-after:jei")
 public class RecipeDumper {
     public DelegateFurnaceRecipeMap<ItemStack> smeltingList;
     public DelegateFurnaceRecipeMap<Float> experienceList;

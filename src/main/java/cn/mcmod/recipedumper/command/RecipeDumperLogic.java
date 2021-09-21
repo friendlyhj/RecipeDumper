@@ -5,6 +5,7 @@ import cn.mcmod.recipedumper.util.IntIntersectionHelper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.*;
+import mezz.jei.Internal;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -104,16 +105,7 @@ public class RecipeDumperLogic {
                 convertItemStack(json, ingredient.getMatchingStacks()[0]);
             } else if (ingredient.getClass() == OreIngredient.class) {
                 ItemStack[] matchingStacks = ingredient.getMatchingStacks();
-                IntIntersectionHelper intersectionHelper = null;
-                for (ItemStack matchingStack : matchingStacks) {
-                    int[] oreIDs = OreDictionary.getOreIDs(matchingStack);
-                    if (intersectionHelper == null) {
-                        intersectionHelper = new IntIntersectionHelper(oreIDs);
-                    } else {
-                        intersectionHelper.addOperatedInts(oreIDs);
-                    }
-                }
-                json.addProperty("oredict", OreDictionary.getOreName(intersectionHelper.getFirstIntersection()));
+                json.addProperty("oredict", getOreDict(Arrays.asList(matchingStacks)));
             }
         } catch (Throwable t) {
             throw new RecipeDumpException();
@@ -179,5 +171,24 @@ public class RecipeDumperLogic {
         return stack2.getItem() == stack1.getItem() && (stack2.getMetadata() == 32767 || stack2.getMetadata() == stack1.getMetadata());
     }
 
-    public static class RecipeDumpException extends Exception {}
+    private String getOreDict(List<ItemStack> items) throws RecipeDumpException {
+        if (items.size() == 1) {
+            int[] oreIDs = OreDictionary.getOreIDs(items.get(0));
+            if (oreIDs.length != 1) {
+                throw new RecipeDumpException();
+            } else {
+                return OreDictionary.getOreName(oreIDs[0]);
+            }
+        } else {
+            String result = Internal.getStackHelper().getOreDictEquivalent(items);
+            if (result == null) {
+                throw new RecipeDumpException();
+            }
+            return result;
+        }
+    }
+
+    public static class RecipeDumpException extends Exception {
+
+    }
 }
