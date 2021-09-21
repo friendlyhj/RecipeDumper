@@ -1,12 +1,12 @@
 package cn.mcmod.recipedumper.command;
 
 import cn.mcmod.recipedumper.RecipeDumper;
-import cn.mcmod.recipedumper.util.IntIntersectionHelper;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.*;
 import mezz.jei.Internal;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -104,11 +104,10 @@ public class RecipeDumperLogic {
             if ((ingredient.getClass() == Ingredient.class && ingredient.getMatchingStacks().length == 1) || ingredient.getClass() == IngredientNBT.class) {
                 convertItemStack(json, ingredient.getMatchingStacks()[0]);
             } else if (ingredient.getClass() == OreIngredient.class) {
-                ItemStack[] matchingStacks = ingredient.getMatchingStacks();
-                json.addProperty("oredict", getOreDict(Arrays.asList(matchingStacks)));
+                json.addProperty("oredict", getOreDict(ingredient.getMatchingStacks()));
             }
         } catch (Throwable t) {
-            throw new RecipeDumpException();
+            throw new RecipeDumpException("failed to convert ingredient: " + ingredient, t);
         }
         return json;
     }
@@ -171,24 +170,30 @@ public class RecipeDumperLogic {
         return stack2.getItem() == stack1.getItem() && (stack2.getMetadata() == 32767 || stack2.getMetadata() == stack1.getMetadata());
     }
 
-    private String getOreDict(List<ItemStack> items) throws RecipeDumpException {
-        if (items.size() == 1) {
-            int[] oreIDs = OreDictionary.getOreIDs(items.get(0));
+    private String getOreDict(ItemStack[] items) throws RecipeDumpException {
+        if (items.length == 1) {
+            int[] oreIDs = OreDictionary.getOreIDs(items[0]);
             if (oreIDs.length != 1) {
-                throw new RecipeDumpException();
+                throw new RecipeDumpException(items[0] + " has two or more ore dict entries");
             } else {
                 return OreDictionary.getOreName(oreIDs[0]);
             }
         } else {
-            String result = Internal.getStackHelper().getOreDictEquivalent(items);
+            String result = Internal.getStackHelper().getOreDictEquivalent(Arrays.asList(items));
             if (result == null) {
-                throw new RecipeDumpException();
+                throw new RecipeDumpException(Arrays.toString(items) + " don't have the same ore dict entry");
             }
             return result;
         }
     }
 
     public static class RecipeDumpException extends Exception {
+        public RecipeDumpException(String message) {
+            super(message);
+        }
 
+        public RecipeDumpException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }
