@@ -1,0 +1,15 @@
+[
+  {
+    "modid": "recipedumper",
+    "name": "Recipe Dumper",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "description": "Dump recipes for MCMOD",
+    "authorList": [
+      "youyihj"
+    ],
+    "parent": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
